@@ -3,6 +3,10 @@ name = "cakerabbit-core"
 version = "0.1.0"
 authors = ["halokid <r00txxyyzz@gmail.com>"]
 edition = "2018"
+description = "A rust microservice framework, this is the core kernel for the project."
+documentation = "https://docs.rs/crate/cakerabbit-core"
+repository = "https://github.com/halokid/cakerabbit-core"
+license = "MIT/Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
