@@ -43,11 +43,29 @@ cakerabbit-core = "0.1.0"
 
 ## Example
 
+code a EchoRs service, register method say_hello().
+if you want to devlop use local project source, check the example in folder 
+./examples/echo_use_localsource.
+run command, check the toml:
+```shell
+cargo.exe run --example echoserver
+
+cargo.exe run --example echoclient
+```
+
+if you want to devlop use crate.io source,  check the example in folder
+./examples/echo_use_crateio
+run command, check the toml:
+```shell
+cd ./examples/echo_use_crateio
+
+cargo.exe run --example echoserver
+
+cargo.exe run --example echoclient
+```
 
 
 ### Server
-
-code a EchoRs service, register method say_hello()
 
 ```rust
 const SVC_NAME: &str = "EchoRs";
@@ -93,8 +111,6 @@ async fn main() -> io::Result<()> {
 
 
 ```
-
-
 
 ### client
 

@@ -35,11 +35,11 @@ incremental = true
 
 [[example]]
 name = "echoclient"
-path = "examples/echo/client_use_cake.rs"
+path = "examples/echo_use_localsource/client_use_cake.rs"
 
 [[example]]
 name = "echoserver"
-path = "examples/echo/server_use_cake.rs"
+path = "examples/echo_use_localsource/server_use_cake.rs"
 
 
 
