@@ -97,8 +97,12 @@ impl RegisterImpl for RegConsul {
                                             service)).unwrap();
     // svc_nodes
     let mut nodes = Vec::new();
+    let svc_prefix = &self.svc_prefix;
+    let svc_name = &self.svc_name;
+    let repl = format!("{}{}/tcp@", svc_prefix, svc_name);
     for node in svc_nodes {
-      let node_fix = node.replace(&self.svc_prefix + "EchoRs/tcp@", "");
+      // let repl = format!("{}{}/tcp@", svc_prefix, svc_name);
+      let node_fix = node.replace(&repl, "");
       nodes.push(node_fix);
     }
     nodes

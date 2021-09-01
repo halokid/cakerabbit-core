@@ -1,6 +1,8 @@
 
-const VERSION: String = "0.1".to_string();
+const VERSION: &str = "0.1";
 
 fn main() {
-  trace!("Hello CakeRabbit-core, version {}", VERSION);
+  println!("Hello CakeRabbit-core, version {}", VERSION);
 }
+
+
