@@ -51,8 +51,13 @@ impl Register {
 #[test]
 fn test_register_svc() {
   env_logger::from_env(Env::default().default_filter_or("info")).init();
-  let mut reg = Register::new("consul", "8.8.8.8:8500",
-   "my_svc", "cake/".to_string(), "9527", "1m0s".to_string(), true);
+  let mut reg = Register::new_for_service("consul".to_string(),
+                                          "8.8.8.8:8500".to_string(),
+                                          "my_svc".to_string(),
+                                          "cake/".to_string(),
+                                          "9527".to_string(),
+                                          "1m0s".to_string(),
+                                          true);
   let res = reg.do_reg(); match res {
     Ok(_) => {}
     Err(_) => {}

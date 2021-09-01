@@ -8,6 +8,7 @@ use std::io;
 use std::sync::Arc;
 use serde::{Serialize, Deserialize};
 use crate::failmode::FailMode;
+use crate::errors::cake_errors;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CakeClient {
@@ -56,7 +57,8 @@ impl CakeClient {
           retries -= 1;
         }
 
-        return Ok("--@@@--cakeClient call Failtry max retries Error--@@@--".to_string());
+        // return Ok("error".to_string());
+        return Err(CakeError(cake_errors("callFailtryErr")));
       },
 
       _ => {}

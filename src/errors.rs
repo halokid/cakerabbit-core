@@ -66,3 +66,14 @@ impl From<decode::Error> for DecodeError {
     }
   }
 }
+
+pub fn cake_errors(e: &str) -> String {
+  match e {
+    "callFailtryErr" => { "--@@@--cakeClient call Failtry max retries Error--@@@--".to_string() }
+    _ => { "unknow error".to_string() }
+  }
+}
+
+
+
+
