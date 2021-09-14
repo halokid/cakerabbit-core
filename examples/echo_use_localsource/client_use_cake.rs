@@ -13,10 +13,10 @@ async fn main() -> io::Result<()> {
   env_logger::init();
 
   let fm = FailMode::Failtry(Failtry{ retries: 3 });
-  let mut cake_client = CakeClient::new("cake/".into(),
+  let mut cake_client = CakeClient::new("pomid/".into(),
                                         "EchoRs".into(),
                                         "consul".into(),
-                                        "localhost:8500".into(),
+                                        "consul_test:8500".into(),
                                         SelectorTyp::RoundRobin,
                                         FailMode::FailFast);
                                          // fm);

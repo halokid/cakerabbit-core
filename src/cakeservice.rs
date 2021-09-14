@@ -119,7 +119,7 @@ impl CakeServiceServe {
     Ok(true)
   }
 
-  pub fn register_fn(&self, fn_key: String, f: CakeFn, vals: &[Value]) {
+  pub fn register_fn(&self, fn_key: String, f: CakeFn) {
     let mut fn_map = self.svc_fns.write().unwrap();
     fn_map.insert(fn_key, Box::new(f));
   }

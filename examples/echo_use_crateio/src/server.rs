@@ -37,17 +37,15 @@ async fn main() -> io::Result<()> {
   env_logger::from_env(Env::default().default_filter_or("info")).init();
 
   let mut svc_serve = CakeServiceServe::new(SVC_NAME.to_string(),
-                                            "cake/".to_string(),
+                                            "pomid/".to_string(),
                                             "0.0.0.0:9527".to_string(),
                                             "consul".to_string(),
-                                            "localhost:8500".to_string(),
+                                            "consul_test:8500".to_string(),
                                             "1m0s".to_string(),
                                             false);
 
   // todo: register svc method
-  svc_serve.register_fn("say_hello".into(),
-                        say_hello,
-                        &["foo".into()]);
+  svc_serve.register_fn("say_hello".into(), say_hello);
 
   // todo: run
   svc_serve.run().await;
