@@ -131,7 +131,7 @@ impl CakeServiceServe {
   pub async fn run(self) -> io::Result<()> {
     // register svc
     let selfx = self.clone();
-    tokio::spawn(async move {
+    tokio::task::spawn(async move {
       selfx.register_svc();
     });
 
@@ -154,9 +154,13 @@ impl CakeServiceServe {
       info!("new client connection -------- {:?}, index: {}", socket, index);
       info!("spawning a new Service Serve");
       // todo: add move to optimize self.clone()??
-      tokio::spawn(serve(socket.compat(),
-                   self.clone())
+      // tokio::spawn(serve(socket.compat(), self.clone())
+      // tokio::task::spawn(serve(socket.compat(), self.clone())
+      tokio::task::spawn(serve(socket.compat(), self.clone())
         .map_err(|e| info!("service start error {}", e)));
+
+      // tokio::task::spawn( async move { serve(socket.compat(), self.clone())
+      //   .map_err(|e| info!("service start error {}", e))} );
     }
   }
 }

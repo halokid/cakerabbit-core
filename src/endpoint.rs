@@ -62,7 +62,7 @@ impl<S: ServiceWithClient> Server<S> {
     trace!("spawning a new task");
     trace!("spawning the task on the event loop");
     let send = self.response_sender.clone();
-    tokio::spawn(f.map(move |result| send.unbounded_send((id, result))));
+    tokio::task::spawn(f.map(move |result| send.unbounded_send((id, result))));
   }
 }
 
@@ -303,6 +303,7 @@ impl<T> Sink<Message> for Transport<T>
 }
 
 impl<S: Service> MessageHandler for Server<S> {
+  // todo: server handle request data from client
   fn handle_incoming(&mut self, msg: Message) {
     match msg {
       Message::Request(req) => {
@@ -328,6 +329,7 @@ impl<S: Service> MessageHandler for Server<S> {
 }
 
 impl MessageHandler for InnerClient {
+  // todo: client handle response data from server
   fn handle_incoming(&mut self, msg: Message) {
     trace!("Received {:?}", msg);
     if let Message::Response(response) = msg {
@@ -526,7 +528,7 @@ impl Client {
     // We swallow io::Errors. The client will see an error if it has any outstanding requests
     // or if it tries to send anything, because the endpoint has terminated.
     // todo: 这里不是异步检查 endpoint是否有错误? 而且异步跑
-    tokio::spawn(
+    tokio::task::spawn(
       endpoint.map_err(|e| error!("Client endpoint closed because of an error: {}", e)),
     );
 

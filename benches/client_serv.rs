@@ -15,7 +15,7 @@ async fn client_to_serv() -> io::Result<()> {
 
   client.notify("I am notify message", &[]);
 
-  match client.request("Say", &["foo".into()]).await {
+  match client.request("say_hello", &["foo".into()]).await {
     Ok(response) => println!("Response: {:?}", response),
     Err(e) => println!("Error: {:?}", e),
   }
