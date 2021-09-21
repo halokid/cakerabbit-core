@@ -416,6 +416,7 @@ impl<MH: MessageHandler + Unpin, T: AsyncRead + AsyncWrite> Future for InnerEndp
     trace!("Polling stream.");
     while let Poll::Ready(msg) = stream.as_mut().poll_next(cx)? {
       if let Some(msg) = msg {
+        trace!("---handle_incoming msg---.");
         handler.handle_incoming(msg);
       } else {
         trace!("Stream closed by remote peer.");
