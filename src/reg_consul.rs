@@ -44,7 +44,7 @@ impl RegisterImpl for RegConsul {
 
     let svc_addr = local_ipaddress::get().unwrap();
     let key = format!("{}{}/tcp@{}:{}", path_prex, &self.svc_name, &svc_addr, &self.svc_port);
-    let val = String::from("typ=rust");
+    let val = String::from("typ=cakeRabbit");
     let kv_session = c.session_set("0.001s".to_string(),
                                    "".to_string(),
                                    "".to_string(),

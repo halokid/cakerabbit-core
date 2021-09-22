@@ -22,7 +22,8 @@ fn say_hello(params: &[Value]) -> CakeResult<Vec<u8>> {
   if let Value::String(ref value) = params[0] {
     if let Some(val) = value.as_str() {
       let rsp = SayHelloReply {
-        name: "foo".to_string()
+        // name: "foo".to_string()
+        name: val.to_string()
       };
       let rsp_vec = serde_json::to_vec(&rsp).unwrap();
       return Ok(rsp_vec);

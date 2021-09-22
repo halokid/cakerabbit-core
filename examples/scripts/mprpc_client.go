@@ -12,6 +12,7 @@ import (
 type Request struct {
   //id          int32
   method      string
+  ARGS        []string
   //params      *[]interface{}
   //params      []uint8
   //params      []string
@@ -39,16 +40,24 @@ func main() {
   //          `
   //_, err = conn.Write([]byte(request))
 
+  ///*
   request := Request{
     //id:     0,
     method: "say_hello",
+    ARGS:   []string{},
+    //method: "say_hello",
     //params: &[]interface{}{},
     //params: []interface{}{},
     //params: []uint8{},
     //params: []string{},
     //params: []byte{},
   }
+  //*/
+
+  //xx :=  []string{"say_hello", "bb"}
+
   bReq, err := msgpack.Marshal(&request)
+  //bReq, err := msgpack.Marshal(&xx)
   ColorfulRabbit.CheckError(err, "mprpc marshal error")
   _, err = conn.Write(bReq)
   ColorfulRabbit.CheckError(err, "mprpc go conn send data error")
