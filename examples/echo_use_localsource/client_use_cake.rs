@@ -31,6 +31,7 @@ async fn main() -> io::Result<()> {
     }
   }
 
+  /*
   thread::sleep(time::Duration::from_secs(2));
   // todo: cake_clientx borrow to anthor thread, because use tokio async fn here!
   match cake_client.call("say_hello", &["foo2".into()]).await {
@@ -41,6 +42,7 @@ async fn main() -> io::Result<()> {
       println!("err2 ------------------ {:?}", err);
     }
   }
+   */
 
   Ok(())
 }

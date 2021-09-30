@@ -145,6 +145,9 @@ async fn main() -> io::Result<()> {
 you can build a service use 
 
 
+## Attention
+1.  dont use tokio runtime block_on in the rpc fn program, because the rust future, will be occur error `Cannot start a runtime from within a runtime`, cakeRabbit is base on tokio runtime
+
 ## Features
 1. Easy use, keep in simple
 

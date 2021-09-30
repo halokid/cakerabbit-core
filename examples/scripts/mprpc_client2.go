@@ -3,6 +3,7 @@ package main
 import (
   "fmt"
   "github.com/msgpack-rpc/msgpack-rpc-go/rpc"
+  "log"
   "net"
   "reflect"
 )
@@ -22,19 +23,26 @@ func add(a, b uint) (uint, fmt.Stringer) {
 }
 
 func main() {
-  conn, err := net.Dial("tcp", "127.0.0.1:9527")
+  //conn, err := net.Dial("tcp", "127.0.0.1:9527")
+  conn, err := net.Dial("tcp", "127.0.0.1:10011")
   if err != nil {
     fmt.Println("fail to connect to server.")
     return
   }
   client := rpc.NewSession(conn, true)
 
-  retval, xerr := client.Send("say_hello", "foo")
+  //retval, xerr := client.Send("say_hello", "foo")
+  log.Println("--- run here 1 ---")
+  retval, xerr := client.Send("company", "2")
+  //retval, xerr := client.Send("company", "2", "3", "i am keyword")
+  log.Println("--- run here 2 ---")
   if xerr != nil {
-    fmt.Println(xerr)
+    fmt.Println("error ---------", xerr)
     return
   }
   fmt.Println(retval.String())
+  fmt.Println("done")
+  //fmt.Println(rpc.CoerceInt(retval))
 }
 
 func comm() {
