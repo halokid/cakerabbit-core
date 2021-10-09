@@ -2,7 +2,7 @@ package main
 
 import (
   "fmt"
-  "github.com/msgpack-rpc/msgpack-rpc-go/rpc"
+  "github.com/halokid/msgpack-rpc-go/rpc"
   "log"
   "net"
   "reflect"
