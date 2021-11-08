@@ -10,6 +10,8 @@ A rust microservice framework, this is the core kernel for the project.
 
 - Service 
     - [x] register service fn 
+    - [ ] cache service nodes data, improve transfort performance
+    - [ ] watching nodes services data change, update services nodes data cache
 
 - Server 
     - [x] RPC server(tokio future)

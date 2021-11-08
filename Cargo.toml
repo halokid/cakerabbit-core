@@ -41,6 +41,12 @@ path = "examples/echo_use_localsource/client_use_cake.rs"
 name = "echoserver"
 path = "examples/echo_use_localsource/server_use_cake.rs"
 
+[[example]]
+name = "echoserver_bigdata"
+path = "examples/echo_use_localsource/server_use_cake_rspbigdata.rs"
+
+
+
 
 
 
