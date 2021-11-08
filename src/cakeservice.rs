@@ -9,10 +9,11 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_util::compat::TokioAsyncReadCompatExt;
 
 use crate::{CakeError, Client, serve};
-use crate::reg::{ Register, RegisterImpl };
+use crate::reg::{Register, RegisterImpl};
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use std::io::Error;
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, middleware::Logger, Result};
 
 pub trait Service: Send {
   type RequestFuture: Future<Output=Result<Value, Value>> + 'static + Send;
@@ -63,14 +64,14 @@ macro_rules! register_cakefn {
 // todo: cakeRabbit wrap service server
 #[derive(Clone)]
 pub struct CakeServiceServe {
-  svc_name:  String,
-  svc_prefix:   String,
-  addr:     String,
-  reg_adapter:  String,
-  reg_addr:     String,
-  reg_ttl:      String,
-  svc_fns:  Arc<RwLock<HashMap<String, Box<CakeFn>>>>,
-  debug:    bool,
+  svc_name: String,
+  svc_prefix: String,
+  addr: String,
+  reg_adapter: String,
+  reg_addr: String,
+  reg_ttl: String,
+  svc_fns: Arc<RwLock<HashMap<String, Box<CakeFn>>>>,
+  debug: bool,
 }
 
 pub type CakeResult<T> = result::Result<T, CakeError>;
@@ -87,8 +88,8 @@ pub type CakeFn = fn(&[Value]) -> CakeResult<Vec<u8>>;
 impl CakeServiceServe {
   pub fn new(svc_name: String, svc_prefix: String, addr: String,
              reg_adapter: String, reg_addr: String, reg_ttl: String,
-             debug: bool
-             ) -> Self {
+             debug: bool,
+  ) -> Self {
     CakeServiceServe {
       svc_name,
       svc_prefix,
@@ -97,7 +98,7 @@ impl CakeServiceServe {
       reg_addr,
       reg_ttl,
       svc_fns: Arc::new(Default::default()),
-      debug
+      debug,
     }
   }
 
@@ -109,7 +110,8 @@ impl CakeServiceServe {
                                             self.svc_name, self.svc_prefix.to_string(),
                                             svc_split_vec[1].to_string(), self.reg_ttl.to_string(),
                                             self.debug);
-    let res = reg.do_reg(); match res {
+    let res = reg.do_reg();
+    match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
         info!("Service {} register error: {:?}.", svc_namex, e);
@@ -129,10 +131,15 @@ impl CakeServiceServe {
   }
 
   pub async fn run(self) -> io::Result<()> {
-    // register svc
     let selfx = self.clone();
+    // todo: register svc
     tokio::task::spawn(async move {
       selfx.register_svc();
+    });
+    // todo: http api
+    tokio::task::spawn(async move {
+      println!("===starting http api serv===");
+      enable_httpapi();
     });
 
     let addr: SocketAddr = self.addr.parse().unwrap();
@@ -143,7 +150,7 @@ impl CakeServiceServe {
         Ok((socket, _)) => {
           index += 1;
           socket
-        },
+        }
 
         Err(e) => {
           error!("error on TcpListener: {}", e);
@@ -163,6 +170,25 @@ impl CakeServiceServe {
       //   .map_err(|e| info!("service start error {}", e))} );
     }
   }
+}
+
+#[actix_web::main]          // 这是一个注解, 类似java的@
+async fn enable_httpapi() -> std::io::Result<()> {
+  HttpServer::new(|| {
+    App::new()
+      .service(pong)
+      .wrap(Logger::default())
+  }).workers(2)
+    .bind("127.0.0.1:8089")?
+    .run()
+    .await
+}
+
+#[get("/pong")]
+async fn pong() -> impl Responder {
+  // let name = "xx";
+  HttpResponse::Ok().body("pong")
+  // let name = "xx";
 }
 
 impl Service for CakeServiceServe {
