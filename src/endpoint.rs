@@ -98,6 +98,7 @@ type NotificationRx = mpsc::UnboundedReceiver<(Notification, AckTx)>;
 impl Future for Response {
   type Output = Result<Value, Value>;
 
+  // todo: ==step 3==
   fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
     trace!("Response: polling");
     Poll::Ready(match ready!(Pin::new(&mut self.0).poll(cx)) {
@@ -214,8 +215,9 @@ impl InnerClient {
       match Pin::new(&mut self.requests_rx).poll_next(cx) {
         Poll::Ready(Some((mut request, response_sender))) => {
           self.request_id += 1;
-          trace!("Got request from client: {:?}", request);
+          // trace!("Got request from client: {:?}", request);
           request.id = self.request_id;
+          trace!("=== Send Message to Service-serv: {:?}", request);
           stream.as_mut().start_send(Message::Request(request))?;
           self.pending_requests
             .insert(self.request_id, response_sender);
@@ -235,8 +237,10 @@ impl InnerClient {
   }
 
   fn process_response(&mut self, response: MsgPackResponse) {
+    trace!("一个客户端的请求处理完成，response.id为{},\
+            在pennding_requests中去掉这个id的key", &response.id);
     if let Some(response_tx) = self.pending_requests.remove(&response.id) {
-      trace!("Forwarding response to the client.");
+      trace!("协程转发数据给客户端主线程 == Forwarding response to the client.");
       if let Err(e) = response_tx.send(response.result) {
         warn!("Failed to send response to client: {:?}", e);
       }
@@ -305,8 +309,10 @@ impl<T> Sink<Message> for Transport<T>
 impl<S: Service> MessageHandler for Server<S> {
   // todo: server handle request data from client
   fn handle_incoming(&mut self, msg: Message) {
+    trace!("=== impl MessageHandler for Server handle_incoming ===");
     match msg {
       Message::Request(req) => {
+        // todo: invoke service method
         let f = self.service.handle_request(&req.method, &req.params);
         self.spawn_request_worker(req.id, f);
       }
@@ -331,7 +337,8 @@ impl<S: Service> MessageHandler for Server<S> {
 impl MessageHandler for InnerClient {
   // todo: client handle response data from server
   fn handle_incoming(&mut self, msg: Message) {
-    trace!("Received {:?}", msg);
+    trace!("=== 接收到服务端数据, impl MessageHandler for InnerClient handle_incoming ===");
+    trace!("handle_incoming Received {:?}", msg);
     if let Message::Response(response) = msg {
       self.process_response(response);
     } else {
@@ -344,6 +351,7 @@ impl MessageHandler for InnerClient {
     cx: &mut Context,
     sink: Pin<&mut Transport<T>>,
   ) -> Poll<io::Result<()>> {
+    trace!("=== impl MessageHandler for InnerClient invoke send_outgoing ===");
     self.send_messages(cx, sink)
   }
 
@@ -362,6 +370,7 @@ struct ClientAndServer<S> {
 
 impl<S: ServiceWithClient> MessageHandler for ClientAndServer<S> {
   fn handle_incoming(&mut self, msg: Message) {
+    trace!("=== impl MessageHandler for ClientAndServer<S> handle_incoming ===");
     match msg {
       Message::Request(req) => {
         let f =
@@ -399,6 +408,7 @@ struct InnerEndpoint<MH, T> {
   stream: Transport<T>,
 }
 
+// todo: ==step 2==
 impl<MH: MessageHandler + Unpin, T: AsyncRead + AsyncWrite> Future for InnerEndpoint<MH, T> {
   type Output = io::Result<()>;
 
@@ -408,12 +418,14 @@ impl<MH: MessageHandler + Unpin, T: AsyncRead + AsyncWrite> Future for InnerEndp
       let this = self.get_unchecked_mut();
       (&mut this.handler, Pin::new_unchecked(&mut this.stream))
     };
+    trace!("=== InnerEndpoint handler.send_outgoing, 客户端在这里发送数据给服务端! ===");
     if let Poll::Pending = handler.send_outgoing(cx, stream.as_mut())? {
       trace!("Sink not yet flushed, waiting...");
       return Poll::Pending;
     }
 
-    trace!("Polling stream.");
+    trace!("=== 客户端Polling stream, 轮询stream, 也就是轮询socket事件, 接收服务端的返回! ===");
+    // todo: stream.as_mut().poll_next go to ==> fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {}
     while let Poll::Ready(msg) = stream.as_mut().poll_next(cx)? {
       trace!("---check msg struct---");
       if let Some(msg) = msg {
@@ -433,6 +445,7 @@ impl<MH: MessageHandler + Unpin, T: AsyncRead + AsyncWrite> Future for InnerEndp
       Poll::Ready(Ok(()))
     } else {
       trace!("notifying the reactor that we're not done yet");
+      trace!("=== 这里执行 Poll:Pending, 如果客户端已经没有发送数据给服务端的话，那就是不会触发 InnerEndpoint: polling(通信入口的轮询), 客户端就不会polling socket事件， 客户端程序会退出 ===");
       Poll::Pending
     }
   }
@@ -520,6 +533,12 @@ pub struct Client {
 
 impl Client {
 
+  // todo: T inherit reait for AsyncRead, AsyncWrite etc.
+  // todo: the steps for client call server
+  // todo: 1. client.call fn call(&self, method: &str, params: &[Value]) -> Response {}
+  // todo: 2. impl Future for InnerEndpoint<MH, T>, invoke the poll fn
+  // todo: 3. because 1 return Response, so step 3 is impl Future for Response{}, invoke poll fn
+  // todo: 4. impl Future for InnerEndpoint, invoke poll fn, in this code process `let Poll::Pending = handler.send_outgoing(cx, stream.as_mut())`
   pub fn new<T: AsyncRead + AsyncWrite + 'static + Send>(stream: T) -> Self {
     let (inner_client, client) = InnerClient::new();
     let stream = FuturesAsyncWriteCompatExt::compat_write(stream);
@@ -545,6 +564,7 @@ impl Client {
   // }
 
   /// Send a `MessagePack-RPC` request
+  // todo: ==step 1==
   pub fn call(&self, method: &str, params: &[Value]) -> Response {
     trace!("New call (method={}, params={:?})", method, params);
     let request = Request {
@@ -557,6 +577,7 @@ impl Client {
     // we are just dropping the `tx`, which will mean the rx will return Canceled when
     // polled. In turn, that is translated into a BrokenPipe, which conveys the proper
     // error.
+    // todo: this will trigger the InnerEndpoint poll fn
     let _ = mpsc::UnboundedSender::unbounded_send(&self.requests_tx, (request, tx));
     Response(rx)
   }
