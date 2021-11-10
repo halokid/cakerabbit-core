@@ -100,7 +100,7 @@ impl Future for Response {
 
   // todo: ==step 3==
   fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-    trace!("Response: polling");
+    trace!("=== Response: polling, 触发了Response的Future poll fn ===");
     Poll::Ready(match ready!(Pin::new(&mut self.0).poll(cx)) {
       Ok(Ok(v)) => Ok(v),
       Ok(Err(v)) => Err(v),
@@ -267,6 +267,7 @@ impl<T> Transport<T>
     T: AsyncRead + AsyncWrite,
 {
   fn inner(self: Pin<&mut Self>) -> Pin<&mut Framed<Compat<T>, Codec>> {
+    trace!("=== Transport inner 返回Transport Framed ===");
     unsafe { self.map_unchecked_mut(|this| &mut this.0) }
   }
 }
@@ -278,7 +279,8 @@ impl<T> Stream for Transport<T>
   type Item = io::Result<Message>;
 
   fn poll_next(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
-    trace!("Transport: polling");
+    // trace!("Transport: polling");
+    trace!("=== Transport polling动作,一旦有Transport,就会触发下面的逻辑 ===");
     self.inner().poll_next(cx)
   }
 }
@@ -413,7 +415,7 @@ impl<MH: MessageHandler + Unpin, T: AsyncRead + AsyncWrite> Future for InnerEndp
   type Output = io::Result<()>;
 
   fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-    trace!("InnerEndpoint: polling");
+    trace!("=== 触发Future for InnerEndpoint 的 poll, InnerEndpoint: polling ===");
     let (handler, mut stream) = unsafe {
       let this = self.get_unchecked_mut();
       (&mut this.handler, Pin::new_unchecked(&mut this.stream))
@@ -534,7 +536,9 @@ pub struct Client {
 impl Client {
 
   // todo: T inherit reait for AsyncRead, AsyncWrite etc.
-  // todo: the steps for client call server
+  // todo: the steps for client call server, 所有的step都是在 inner_client 的 Future 和 rsp.await的 Futre 两个逻辑按照先后顺序触发的，
+  // todo: tokio::task::spawn( endpoint.map_err())， 这个写法是新起一个协程，来监听poll事件， endpoint impl Future， 然后继承执行 Future的poll fn,一些
+  // todo: let rsp = inner_client.call(method, params), 然后执行rsp.wait 会触发 Response的poll
   // todo: 1. client.call fn call(&self, method: &str, params: &[Value]) -> Response {}
   // todo: 2. impl Future for InnerEndpoint<MH, T>, invoke the poll fn
   // todo: 3. because 1 return Response, so step 3 is impl Future for Response{}, invoke poll fn
@@ -542,6 +546,7 @@ impl Client {
   pub fn new<T: AsyncRead + AsyncWrite + 'static + Send>(stream: T) -> Self {
     let (inner_client, client) = InnerClient::new();
     let stream = FuturesAsyncWriteCompatExt::compat_write(stream);
+    // todo: 在这里并没有触发 InnerEndpoint 的 Future poll fn, 一定要在 spawn里触发
     let endpoint = InnerEndpoint {
       stream: Transport(Codec.framed(stream)),
       handler: inner_client,
@@ -549,6 +554,7 @@ impl Client {
     // We swallow io::Errors. The client will see an error if it has any outstanding requests
     // or if it tries to send anything, because the endpoint has terminated.
     // todo: 这里不是异步检查 endpoint是否有错误? 而且异步跑
+    // todo: 触发 impl Future for InnerEndpoint 的 poll fn
     tokio::task::spawn(
       endpoint.map_err(|e| error!("Client endpoint closed because of an error: {}", e)),
     );
