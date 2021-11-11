@@ -136,11 +136,12 @@ impl CakeServiceServe {
     tokio::task::spawn(async move {
       selfx.register_svc();
     });
+
     // todo: http api
-    // tokio::task::spawn(async move {
-    //   println!("===starting http api serv===");
-    //   enable_httpapi();
-    // });
+    tokio::task::spawn(async move {
+      println!("===starting http api serv===");
+      enable_httpapi();
+    });
 
     let addr: SocketAddr = self.addr.parse().unwrap();
     let listener = TcpListener::bind(&addr).await?;
