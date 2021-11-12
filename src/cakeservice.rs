@@ -14,6 +14,8 @@ use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use std::io::Error;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, middleware::Logger, Result};
+use actix_web::dev::Server;
+use futures::future::ok;
 
 pub trait Service: Send {
   type RequestFuture: Future<Output=Result<Value, Value>> + 'static + Send;
@@ -72,6 +74,7 @@ pub struct CakeServiceServe {
   reg_ttl: String,
   svc_fns: Arc<RwLock<HashMap<String, Box<CakeFn>>>>,
   debug: bool,
+  http_addr: &'static str,
 }
 
 pub type CakeResult<T> = result::Result<T, CakeError>;
@@ -88,7 +91,7 @@ pub type CakeFn = fn(&[Value]) -> CakeResult<Vec<u8>>;
 impl CakeServiceServe {
   pub fn new(svc_name: String, svc_prefix: String, addr: String,
              reg_adapter: String, reg_addr: String, reg_ttl: String,
-             debug: bool,
+             debug: bool, http_addr: &'static str
   ) -> Self {
     CakeServiceServe {
       svc_name,
@@ -99,6 +102,7 @@ impl CakeServiceServe {
       reg_ttl,
       svc_fns: Arc::new(Default::default()),
       debug,
+      http_addr,
     }
   }
 
@@ -106,11 +110,39 @@ impl CakeServiceServe {
     let svc_split = self.addr.split(":");
     let svc_split_vec: Vec<&str> = svc_split.collect();
     let svc_namex = self.svc_name.clone();
-    let mut reg = Register::new_for_service(self.reg_adapter, self.reg_addr,
-                                            self.svc_name, self.svc_prefix.to_string(),
-                                            svc_split_vec[1].to_string(), self.reg_ttl.to_string(),
-                                            self.debug);
+    let mut reg = Register::new_for_service(self.reg_adapter,
+                                    self.reg_addr,
+                                            self.svc_name,
+                                   self.svc_prefix.to_string(),
+                                    svc_split_vec[1].to_string(),
+                                      self.reg_ttl.to_string(),
+                                             self.debug);
     let res = reg.do_reg();
+    match res {
+      Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
+      Err(e) => {
+        info!("Service {} register error: {:?}.", svc_namex, e);
+        // std::process::exit(0);   // dont need to exit service
+      }
+    }
+    Ok(true)
+  }
+
+  pub fn register_svc_http(&self) -> Result<bool, CakeError> {
+    let svc_split = self.addr.split(":");
+    let svc_split_vec: Vec<&str> = svc_split.collect();
+    let svc_namex = self.svc_name.clone();
+    let reg_adapter = &self.reg_adapter;
+    let reg_addr = &self.reg_addr;
+    let svc_name = &self.svc_name;
+    let mut reg = Register::new_for_service(reg_adapter.to_string(),
+                                    reg_addr.to_string(),
+                                    svc_name.to_string(),
+                                   self.svc_prefix.to_string(),
+                                    svc_split_vec[1].to_string(),
+                                      self.reg_ttl.to_string(),
+                                            self.debug);
+    let res = reg.do_reg_http();
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
@@ -130,6 +162,39 @@ impl CakeServiceServe {
     register_cakefn!(fn_key);
   }
 
+  // pub fn enable_http(&self, http_app: HttpServer<F, I, S, B>) -> HttpServer<F, I, S, B> {
+  //   let http_app = HttpServer::new(|| {
+  //     App::new()
+  //       .route("/pong", web::get().to(pong))
+  //       .wrap(Logger::default())
+  //   });
+  //   http_app
+  // }
+
+  // #[actix_web::main]          // 这是一个注解, 类似java的@
+  // pub async fn enable_http(&self, http_app: HttpServer<F, I, S, B>) -> std::io::Result<()> {
+    // let i: usize = 2;
+    // http_app.workers(i).bind("0.0.0.0:8089")?.run().await
+    // http_app.run().await
+  // }
+
+  // #[actix_web::main]          // 这是一个注解, 类似java的@
+  // pub async fn enable_http(&self, http_app: Server) -> std::io::Result<()> {
+  //   http_app.await
+  // }
+
+  // pub fn run_http(&self, f: fn() -> io::Result<()>) -> io::Result<()> {
+    // run http serv
+    // self.reg_http();
+    // f()     // todo: this will block coroutine running, cannot run other tokio::spwan
+  // }
+
+  // pub fn reg_http(&self) {
+  //   tokio::task::spawn(async move {
+  //     println!("=== resgiter http service, can proxy for gateway rpcx-plus-gateway ===");
+  //   });
+  // }
+
   pub async fn run(self) -> io::Result<()> {
     let selfx = self.clone();
     // todo: register svc
@@ -138,10 +203,18 @@ impl CakeServiceServe {
     });
 
     // todo: http api
-    tokio::task::spawn(async move {
-      println!("===starting http api serv===");
-      enable_httpapi();
-    });
+    // tokio::task::spawn(async move {
+    //   println!("===starting http api serv===");
+    //   enable_httpapi();
+    // });
+
+    // todo: register http api service
+    if self.http_addr != "" {
+      tokio::task::spawn(async move {
+        println!("=== register http api service ===");
+        self.register_svc_http();
+      });
+    }
 
     let addr: SocketAddr = self.addr.parse().unwrap();
     let listener = TcpListener::bind(&addr).await?;
@@ -173,24 +246,22 @@ impl CakeServiceServe {
   }
 }
 
-#[actix_web::main]          // 这是一个注解, 类似java的@
-async fn enable_httpapi() -> std::io::Result<()> {
-  HttpServer::new(|| {
-    App::new()
-      .service(pong)
-      .wrap(Logger::default())
-  }).workers(2)
-    .bind("127.0.0.1:8089")?
-    .run()
-    .await
-}
-
-#[get("/pong")]
-async fn pong() -> impl Responder {
-  // let name = "xx";
-  HttpResponse::Ok().body("pong")
-  // let name = "xx";
-}
+// #[actix_web::main]          // 这是一个注解, 类似java的@
+// async fn enable_httpapi() -> std::io::Result<()> {
+//   HttpServer::new(|| {
+//     App::new()
+//       .service(pong)
+//       .wrap(Logger::default())
+//   }).workers(2)
+//     .bind("127.0.0.1:8089")?
+//     .run()
+//     .await
+// }
+//
+// #[get("/pong")]
+// async fn pong() -> impl Responder {
+//   HttpResponse::Ok().body("pong")
+// }
 
 impl Service for CakeServiceServe {
   type RequestFuture = Pin<Box<dyn Future<Output=Result<Value, Value>> + Send>>;

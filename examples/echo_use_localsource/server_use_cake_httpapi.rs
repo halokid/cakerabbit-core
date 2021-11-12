@@ -11,6 +11,7 @@ use env_logger::Env;
 use serde::{Serialize, Deserialize};
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder,
                 middleware::Logger, Result};
+use actix_web::dev::Server;
 
 const SVC_NAME: &str = "EchoRs";
 
@@ -19,6 +20,7 @@ struct SayHelloReply {
   name: String,
 }
 
+// todo: call by client
 fn say_hello(params: &[Value]) -> CakeResult<Vec<u8>> {
   println!("say_hello params ------------ {:?}", params);
   if let Value::String(ref value) = params[0] {
@@ -35,52 +37,59 @@ fn say_hello(params: &[Value]) -> CakeResult<Vec<u8>> {
   Ok(Vec::from("wrong param".to_string()))
 }
 
+// todo: call by http restful api
+async fn say_hello_api() -> impl Responder {
+  let hello_vec = say_hello(&["foo".into()]).unwrap();
+  // let rsp = std::str::from_utf8(hello_vec.as_ref()).unwrap();
+  let rsp = String::from_utf8(hello_vec).unwrap();
+  // HttpResponse::Ok().body("say_hello_api")
+  // HttpResponse::Ok().body(rsp)
+  // web::Json(rsp)
+  // HttpResponse::Ok().json(rsp)
+  HttpResponse::Ok()
+    .content_type("application/json").body(rsp)
+}
+
+#[actix_web::main]
+async fn http_app(http_addr: &'static str) -> io::Result<()> {
+  HttpServer::new(|| {
+    App::new()
+      .route("/hello", web::get().to(say_hello_api))
+      .wrap(Logger::default())
+  }).workers(2)
+    .bind(http_addr)?
+    .run().await
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
-  env_logger::from_env(Env::default().default_filter_or("info")).init();
+  env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+
+  let http_addr  = "0.0.0.0:8089";
   let mut svc_serve = CakeServiceServe::new(SVC_NAME.to_string(),
                                             "pomid/".to_string(),
                                             "0.0.0.0:9527".to_string(),
                                             "consul".to_string(),
                                             "consul_test:8500".to_string(),
                                             "1m0s".to_string(),
-                                            false);
+                                            false,
+                                            http_addr);
 
   // todo: register svc method
   svc_serve.register_fn("say_hello".into(), say_hello);
 
-  // todo: run
-  println!("===run here 1 ===");
-  svc_serve.run().await;
+  let svc_serv_cl = svc_serve.clone();
+  tokio::task::spawn(async move {
+    println!("=== enable http ===");
+    http_app(http_addr);
+    // svc_serv_cl.run_http(http_app);
+  });
 
-  println!("===run here 2 ===");
+  // todo: run
+  svc_serve.run().await;
 
   Ok(())
 }
-
-#[actix_web::main]          // 这是一个注解, 类似java的@
-async fn main_web() -> std::io::Result<()> {
-  // todo: 这一句代表是从env环境变量中读取， 如果没有则设为info
-  env_logger::from_env(Env::default().default_filter_or("info")).init();
-
-  HttpServer::new(|| {
-    App::new()
-      .service(pong)
-      .wrap(Logger::default())
-  }).workers(2)
-    .bind("127.0.0.1:8089")?
-    .run()
-    .await
-}
-
-#[get("/pong")]
-async fn pong() -> impl Responder {
-  // let name = "xx";
-  HttpResponse::Ok().body("pong")
-  // let name = "xx";
-}
-
-
 
 
 
