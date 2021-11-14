@@ -10,14 +10,16 @@ A rust microservice framework, this is the core kernel for the project.
 
 - Service 
     - [x] register service fn 
-    - [ ] cache service nodes data, improve transfort performance
+    - [x] service support http api 
     - [ ] watching nodes services data change, update services nodes data cache
 
 - Server 
     - [x] RPC server(tokio future)
+    - [x] Http server(actix-web)
 
 - Cilent 
     - [x] RPC client(tokio future)
+    - [ ] Client cache service nodes data, improve transfort performance
 
 - Register 
     - [x] Consul 
@@ -38,7 +40,7 @@ set in Cargo.toml:
 
 ```toml
 [dependencies]
-cakerabbit-core = "0.1.0"
+cakerabbit-core = "0.1.1"
 ```
 
 
@@ -62,13 +64,15 @@ run command, check the toml:
 cd ./examples/echo_use_crateio
 
 cargo.exe run --example echoserver
+# server with http
+# cargo.exe run --examplee choserver_httpapi
 
 cargo.exe run --example echoclient
 ```
 
 
 ### Server
-
+Service with HTTP support, check the code ``server_use_cake_httpapi.rs``
 ```rust
 const SVC_NAME: &str = "EchoRs";
 
@@ -110,7 +114,6 @@ async fn main() -> io::Result<()> {
 
   Ok(())
 }
-
 
 ```
 

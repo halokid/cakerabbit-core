@@ -43,7 +43,8 @@ async fn main() -> io::Result<()> {
                                             "consul".to_string(),
                                             "consul_test:8500".to_string(),
                                             "1m0s".to_string(),
-                                            false);
+                                            false,
+                                          "");
 
   // todo: register svc method
   svc_serve.register_fn("say_hello".into(), say_hello);

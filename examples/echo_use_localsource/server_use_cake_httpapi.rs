@@ -37,15 +37,20 @@ fn say_hello(params: &[Value]) -> CakeResult<Vec<u8>> {
   Ok(Vec::from("wrong param".to_string()))
 }
 
+#[derive(Deserialize)]
+struct Hello {
+    name: String,
+}
+
 // todo: call by http restful api
-async fn say_hello_api() -> impl Responder {
-  let hello_vec = say_hello(&["foo".into()]).unwrap();
-  // let rsp = std::str::from_utf8(hello_vec.as_ref()).unwrap();
+async fn say_hello_api(hello: web::Json<Hello>) -> impl Responder {
+  // let hello_vec = say_hello(&["foo".into()]).unwrap();
+
+  let name = &hello.name;
+  let namex = name.to_string();
+  let hello_vec = say_hello(&[namex.into()]).unwrap();
+
   let rsp = String::from_utf8(hello_vec).unwrap();
-  // HttpResponse::Ok().body("say_hello_api")
-  // HttpResponse::Ok().body(rsp)
-  // web::Json(rsp)
-  // HttpResponse::Ok().json(rsp)
   HttpResponse::Ok()
     .content_type("application/json").body(rsp)
 }
@@ -90,6 +95,4 @@ async fn main() -> io::Result<()> {
 
   Ok(())
 }
-
-
 

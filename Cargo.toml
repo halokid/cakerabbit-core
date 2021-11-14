@@ -1,6 +1,6 @@
 [package]
 name = "cakerabbit-core"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["halokid <r00txxyyzz@gmail.com>"]
 edition = "2018"
 description = "A rust microservice framework, this is the core kernel for the project."

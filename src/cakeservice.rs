@@ -91,7 +91,7 @@ pub type CakeFn = fn(&[Value]) -> CakeResult<Vec<u8>>;
 impl CakeServiceServe {
   pub fn new(svc_name: String, svc_prefix: String, addr: String,
              reg_adapter: String, reg_addr: String, reg_ttl: String,
-             debug: bool, http_addr: &'static str
+             debug: bool, http_addr: &'static str,
   ) -> Self {
     CakeServiceServe {
       svc_name,
@@ -111,12 +111,12 @@ impl CakeServiceServe {
     let svc_split_vec: Vec<&str> = svc_split.collect();
     let svc_namex = self.svc_name.clone();
     let mut reg = Register::new_for_service(self.reg_adapter,
-                                    self.reg_addr,
+                                            self.reg_addr,
                                             self.svc_name,
-                                   self.svc_prefix.to_string(),
-                                    svc_split_vec[1].to_string(),
-                                      self.reg_ttl.to_string(),
-                                             self.debug);
+                                            self.svc_prefix.to_string(),
+                                            svc_split_vec[1].to_string(),
+                                            self.reg_ttl.to_string(),
+                                            self.debug);
     let res = reg.do_reg();
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
@@ -136,13 +136,13 @@ impl CakeServiceServe {
     let reg_addr = &self.reg_addr;
     let svc_name = &self.svc_name;
     let mut reg = Register::new_for_service(reg_adapter.to_string(),
-                                    reg_addr.to_string(),
-                                    svc_name.to_string(),
-                                   self.svc_prefix.to_string(),
-                                    svc_split_vec[1].to_string(),
-                                      self.reg_ttl.to_string(),
+                                            reg_addr.to_string(),
+                                            svc_name.to_string(),
+                                            self.svc_prefix.to_string(),
+                                            svc_split_vec[1].to_string(),
+                                            self.reg_ttl.to_string(),
                                             self.debug);
-    let res = reg.do_reg_http();
+    let res = reg.do_reg_http(self.http_addr.to_string());
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
@@ -173,9 +173,9 @@ impl CakeServiceServe {
 
   // #[actix_web::main]          // 这是一个注解, 类似java的@
   // pub async fn enable_http(&self, http_app: HttpServer<F, I, S, B>) -> std::io::Result<()> {
-    // let i: usize = 2;
-    // http_app.workers(i).bind("0.0.0.0:8089")?.run().await
-    // http_app.run().await
+  // let i: usize = 2;
+  // http_app.workers(i).bind("0.0.0.0:8089")?.run().await
+  // http_app.run().await
   // }
 
   // #[actix_web::main]          // 这是一个注解, 类似java的@
@@ -184,9 +184,9 @@ impl CakeServiceServe {
   // }
 
   // pub fn run_http(&self, f: fn() -> io::Result<()>) -> io::Result<()> {
-    // run http serv
-    // self.reg_http();
-    // f()     // todo: this will block coroutine running, cannot run other tokio::spwan
+  // run http serv
+  // self.reg_http();
+  // f()     // todo: this will block coroutine running, cannot run other tokio::spwan
   // }
 
   // pub fn reg_http(&self) {
@@ -197,6 +197,7 @@ impl CakeServiceServe {
 
   pub async fn run(self) -> io::Result<()> {
     let selfx = self.clone();
+    let selfy = self.clone();
     // todo: register svc
     tokio::task::spawn(async move {
       selfx.register_svc();
@@ -212,7 +213,7 @@ impl CakeServiceServe {
     if self.http_addr != "" {
       tokio::task::spawn(async move {
         println!("=== register http api service ===");
-        self.register_svc_http();
+        selfy.register_svc_http();
       });
     }
 

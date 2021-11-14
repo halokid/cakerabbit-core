@@ -56,7 +56,7 @@ impl RegisterImpl for RegConsul {
     let del_kv_ers = c.kv_delete_both_session(&key);
     match del_kv_ers {
       Err(err) => {
-        info!("Not found old service addr register {}", err);
+        info!("[do_reg] === Not found old service addr register {}", err);
       }
       Ok(ok) => {
         info!("DELETE old service addr register {}", ok);
@@ -80,7 +80,7 @@ impl RegisterImpl for RegConsul {
     }
   }
 
-  fn do_reg_http(&mut self) -> Result<bool, CakeError> {
+  fn do_reg_http(&mut self, http_addr: String) -> Result<bool, CakeError> {
     let mut path_prex = &self.svc_prefix;
     let mut regaddr_iter = &self.regaddr.split(":");
     let regaddr_vec: Vec<&str> = regaddr_iter.clone().collect();
@@ -93,7 +93,8 @@ impl RegisterImpl for RegConsul {
     // set key
     let key_svc = format!("{}{}", path_prex, &self.svc_name);
 
-    let reg_ok = c.kv_set(&key_svc, &self.svc_name.to_string());
+    let reg_ok = c.kv_set(format!("{}{}", &key_svc, "Http"),
+                          format!("{}{}", &self.svc_name.to_string(), "Http"));
     match reg_ok {
       Err(e) => {
         error!("Service {} register error: {}", &self.svc_name, e);
@@ -101,8 +102,11 @@ impl RegisterImpl for RegConsul {
       _ => {}
     }
 
+    let http_addr_sp: Vec<&str> = http_addr.split(":").collect();
     let svc_addr = local_ipaddress::get().unwrap();
-    let key = format!("{}{}/http@{}:{}", path_prex, &self.svc_name, &svc_addr, &self.svc_port);
+    let key = format!("{}{}/http@{}:{}", path_prex,
+                      format!("{}{}", &self.svc_name, "Http"),
+                      &svc_addr, http_addr_sp[1]);
     let val = String::from("typ=rust");
     let kv_session = c.session_set("0.001s".to_string(),
                                    "".to_string(),
@@ -115,7 +119,7 @@ impl RegisterImpl for RegConsul {
     let del_kv_ers = c.kv_delete_both_session(&key);
     match del_kv_ers {
       Err(err) => {
-        info!("Not found old service addr register {}", err);
+        info!("[do_reg_http] === Not found old service addr register {}", err);
       }
       Ok(ok) => {
         info!("DELETE old service addr register {}", ok);

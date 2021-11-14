@@ -6,7 +6,7 @@ pub trait RegisterImpl {
 
   fn do_reg(&mut self) -> Result<bool, CakeError>;
 
-  fn do_reg_http(&mut self) -> Result<bool, CakeError>;
+  fn do_reg_http(&mut self, http_addr: String) -> Result<bool, CakeError>;
 
   fn watch_services(&mut self) -> Result<bool, CakeError>;
 
