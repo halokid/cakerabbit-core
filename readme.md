@@ -12,6 +12,9 @@ A rust microservice framework, this is the core kernel for the project.
     - [x] register service fn 
     - [x] service support http api 
     - [ ] watching nodes services data change, update services nodes data cache
+    - [ ] support register third-party HTTP service use CakeRabbit, you can register the rust
+    http service use this, and call the service use rpcx-plus-gateway(goland), i will release
+    this gateway project soon.
 
 - Server 
     - [x] RPC server(tokio future)
