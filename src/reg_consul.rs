@@ -80,7 +80,7 @@ impl RegisterImpl for RegConsul {
     }
   }
 
-  fn do_reg_http(&mut self, http_addr: String) -> Result<bool, CakeError> {
+  fn do_reg_http(&mut self, http_addr: String, typ: &str) -> Result<bool, CakeError> {
     let mut path_prex = &self.svc_prefix;
     let mut regaddr_iter = &self.regaddr.split(":");
     let regaddr_vec: Vec<&str> = regaddr_iter.clone().collect();
@@ -107,7 +107,8 @@ impl RegisterImpl for RegConsul {
     let key = format!("{}{}/http@{}:{}", path_prex,
                       format!("{}{}", &self.svc_name, "Http"),
                       &svc_addr, http_addr_sp[1]);
-    let val = String::from("typ=rust");
+    // let val = String::from("typ=rust");
+    let val = format!("typ={}", typ);
     let kv_session = c.session_set("0.001s".to_string(),
                                    "".to_string(),
                                    "".to_string(),

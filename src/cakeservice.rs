@@ -128,7 +128,7 @@ impl CakeServiceServe {
     Ok(true)
   }
 
-  pub fn register_svc_http(&self) -> Result<bool, CakeError> {
+  pub fn register_svc_http(&self, typ: &str) -> Result<bool, CakeError> {
     let svc_split = self.addr.split(":");
     let svc_split_vec: Vec<&str> = svc_split.collect();
     let svc_namex = self.svc_name.clone();
@@ -142,7 +142,8 @@ impl CakeServiceServe {
                                             svc_split_vec[1].to_string(),
                                             self.reg_ttl.to_string(),
                                             self.debug);
-    let res = reg.do_reg_http(self.http_addr.to_string());
+    let res = reg.do_reg_http(self.http_addr.to_string(),
+      typ);
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
@@ -213,7 +214,7 @@ impl CakeServiceServe {
     if self.http_addr != "" {
       tokio::task::spawn(async move {
         println!("=== register http api service ===");
-        selfy.register_svc_http();
+        selfy.register_svc_http("cakeRabbit");
       });
     }
 
