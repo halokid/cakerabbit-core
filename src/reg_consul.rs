@@ -81,6 +81,7 @@ impl RegisterImpl for RegConsul {
   }
 
   fn do_reg_http(&mut self, http_addr: String, typ: &str) -> Result<bool, CakeError> {
+    log::info!("http_addr --- {}", http_addr);
     let mut path_prex = &self.svc_prefix;
     let mut regaddr_iter = &self.regaddr.split(":");
     let regaddr_vec: Vec<&str> = regaddr_iter.clone().collect();
@@ -140,6 +141,72 @@ impl RegisterImpl for RegConsul {
         debug!("renew session {} {:?}", kv_session, ok);
         let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
         debug!("--- loop register svc --- {}", ok);
+      }
+    }
+  }
+
+  fn do_reg_external(&mut self, svc_address: String, typ: &str) -> Result<bool, CakeError> {
+    log::info!("svc_addr --- {}", svc_address);
+    let mut path_prex = &self.svc_prefix;
+    let mut regaddr_iter = &self.regaddr.split(":");
+    let regaddr_vec: Vec<&str> = regaddr_iter.clone().collect();
+    let consul_host = regaddr_vec[0];
+    let consul_port = regaddr_vec[1];
+    let consul_port_u16 = consul_port.parse::<u16>().unwrap();
+
+    let mut c = Client::new(consul_host, consul_port_u16);
+    c.debug = self.debug;
+    // set key
+    let key_svc = format!("{}{}", path_prex, &self.svc_name);
+
+    let reg_ok = c.kv_set(format!("{}", &key_svc),
+                          format!("{}", &self.svc_name.to_string()));
+    match reg_ok {
+      Err(e) => {
+        error!("Service {} register error: {}", &self.svc_name, e);
+      }
+      _ => {}
+    }
+
+    // let http_addr_sp: Vec<&str> = http_addr.split(":").collect();
+    // let svc_addr = local_ipaddress::get().unwrap();
+    let key = format!("{}{}/http@{}", path_prex,
+                      &self.svc_name,
+                      svc_address);
+    log::info!("do_reg_external key ---- {}", key);
+    // let val = String::from("typ=rust");
+    let val = format!("typ={}", typ);
+    let kv_session = c.session_set("0.001s".to_string(),
+                                   "".to_string(),
+                                   "".to_string(),
+                                   "delete".to_string(),
+                                   (&self.svc_ttl).to_string());
+    info!("kv_session --------- {}", kv_session);
+    thread::sleep(time::Duration::from_secs(1)); // todo: 确保session生成
+
+    let del_kv_ers = c.kv_delete_both_session(&key);
+    match del_kv_ers {
+      Err(err) => {
+        info!("[do_reg_http] === Not found old service addr register {}", err);
+      }
+      Ok(ok) => {
+        info!("DELETE old service addr register {}", ok);
+      }
+    }
+    thread::sleep(time::Duration::from_secs(1));
+
+    let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
+    info!("write svc addr: {}", ok);
+    if !ok {
+      return Err(CakeError("svc register addr fail".to_string()));
+    } else {
+      trace!("--- loop write svc info ---");
+      loop {
+        thread::sleep(time::Duration::from_secs(100));
+        let ok = c.session_renew(&kv_session).unwrap();
+        debug!("renew session {} {:?}", kv_session, ok);
+        let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
+        info!("--- loop register svc --- {}, {}", &key, ok);
       }
     }
   }

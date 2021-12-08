@@ -8,6 +8,8 @@ pub trait RegisterImpl {
 
   fn do_reg_http(&mut self, http_addr: String, typ: &str) -> Result<bool, CakeError>;
 
+  fn do_reg_external(&mut self, svc_address: String, typ: &str) -> Result<bool, CakeError>;
+
   fn watch_services(&mut self) -> Result<bool, CakeError>;
 
   fn get_service_nodes(&self, service: String) -> Vec<String>;

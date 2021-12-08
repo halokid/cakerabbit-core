@@ -154,7 +154,8 @@ impl CakeServiceServe {
     Ok(true)
   }
 
-  pub fn register_svc_http_external(&self, typ: &str) -> Result<bool, CakeError> {
+  pub fn register_svc_external(&self, typ: &str) -> Result<bool, CakeError> {
+    let svc_address = self.addr.clone();
     let svc_split = self.addr.split(":");
     let svc_split_vec: Vec<&str> = svc_split.collect();
     let svc_namex = self.svc_name.clone();
@@ -168,8 +169,7 @@ impl CakeServiceServe {
                                             svc_split_vec[1].to_string(),
                                             self.reg_ttl.to_string(),
                                             self.debug);
-    let res = reg.do_reg_http(self.reg_adapter.clone(),
-                              typ);
+    let res = reg.do_reg_external(svc_address, typ);
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
