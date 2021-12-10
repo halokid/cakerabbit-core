@@ -159,13 +159,17 @@ impl RegisterImpl for RegConsul {
     // set key
     let key_svc = format!("{}{}", path_prex, &self.svc_name);
 
-    let reg_ok = c.kv_set(format!("{}", &key_svc),
-                          format!("{}", &self.svc_name.to_string()));
-    match reg_ok {
-      Err(e) => {
-        error!("Service {} register error: {}", &self.svc_name, e);
+    // 先检查svc的key是否存在
+    let svc_reg = c.kv_get(format!("{}", &key_svc));
+    if svc_reg.eq("keyNoExists_or_valIsNull") {
+      let reg_ok = c.kv_set(format!("{}", &key_svc),
+                            format!("{}", &self.svc_name.to_string()));
+      match reg_ok {
+        Err(e) => {
+          error!("Service {} register error: {}", &self.svc_name, e);
+        }
+        _ => {}
       }
-      _ => {}
     }
 
     // let http_addr_sp: Vec<&str> = http_addr.split(":").collect();
@@ -174,6 +178,15 @@ impl RegisterImpl for RegConsul {
                       &self.svc_name,
                       svc_address);
     log::info!("do_reg_external key ---- {}", key);
+
+    // todo: if exists the node service key, it means some thread is processing the register
+    // todo: just return the fn
+    let service_node_val = c.kv_get(&key);
+    if !service_node_val.eq("keyNoExists_or_valIsNull") {
+      log::warn!("the service node {} val exists", service_node_val);
+      return Ok(true);
+    }
+
     // let val = String::from("typ=rust");
     let val = format!("typ={}", typ);
     let kv_session = c.session_set("0.001s".to_string(),
@@ -206,7 +219,7 @@ impl RegisterImpl for RegConsul {
         let ok = c.session_renew(&kv_session).unwrap();
         debug!("renew session {} {:?}", kv_session, ok);
         let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
-        info!("--- loop register svc --- {}, {}", &key, ok);
+        info!("--- loop register svc --- {}, {}, in {:?}", &key, ok, thread::current().id());
       }
     }
   }
