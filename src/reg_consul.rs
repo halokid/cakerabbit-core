@@ -1,4 +1,4 @@
-use crate::reg::RegisterImpl;
+use crate::reg::{check_service, RegisterImpl};
 use crate::CakeError;
 use consul_rs_plus::Client;
 use std::{thread, time};
@@ -145,7 +145,8 @@ impl RegisterImpl for RegConsul {
     }
   }
 
-  fn do_reg_external(&mut self, svc_address: String, typ: &str) -> Result<bool, CakeError> {
+  fn do_reg_external(&mut self, svc_address: String, typ: &str,
+    interval: u64) -> Result<bool, CakeError> {
     log::info!("svc_addr --- {}", svc_address);
     let mut path_prex = &self.svc_prefix;
     let mut regaddr_iter = &self.regaddr.split(":");
@@ -183,7 +184,9 @@ impl RegisterImpl for RegConsul {
     // todo: just return the fn
     let service_node_val = c.kv_get(&key);
     if !service_node_val.eq("keyNoExists_or_valIsNull") {
-      log::warn!("the service node {} val exists", service_node_val);
+      log::warn!("the service node key: {}, val: {} exists, exit Thread {:?}", &key,
+        service_node_val, thread::current().id());
+      // todo: exit the Tread
       return Ok(true);
     }
 
@@ -215,12 +218,18 @@ impl RegisterImpl for RegConsul {
     } else {
       trace!("--- loop write svc info ---");
       loop {
-        thread::sleep(time::Duration::from_secs(100));
+        thread::sleep(time::Duration::from_secs(interval));
+        if !check_service(svc_address.as_str()) {
+          break;
+        }
         let ok = c.session_renew(&kv_session).unwrap();
         debug!("renew session {} {:?}", kv_session, ok);
         let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
         info!("--- loop register svc --- {}, {}, in {:?}", &key, ok, thread::current().id());
       }
+
+      // Ok(true)
+      Err(CakeError(format!("[do_reg_external] --- service: {}, node: {} status is false", &self.svc_name ,svc_address)))
     }
   }
 

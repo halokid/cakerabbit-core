@@ -1,5 +1,5 @@
 
-const VERSION: &str = "0.1";
+const VERSION: &str = "0.1.1";
 
 fn main() {
   println!("Hello CakeRabbit-core, version {}", VERSION);

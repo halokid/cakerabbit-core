@@ -1,3 +1,4 @@
+use std::net::TcpStream;
 use crate::CakeError;
 use crate::reg_consul::{RegConsul};
 use env_logger::Env;
@@ -8,7 +9,8 @@ pub trait RegisterImpl {
 
   fn do_reg_http(&mut self, http_addr: String, typ: &str) -> Result<bool, CakeError>;
 
-  fn do_reg_external(&mut self, svc_address: String, typ: &str) -> Result<bool, CakeError>;
+  fn do_reg_external(&mut self, svc_address: String, typ: &str,
+    interval: u64) -> Result<bool, CakeError>;
 
   fn watch_services(&mut self) -> Result<bool, CakeError>;
 
@@ -51,6 +53,23 @@ impl Register {
   }
 }
 
+// check the status for external service, use tcp connect port
+pub fn check_service(svc_address: &str) -> bool {
+  log::info!("=== check_service {} ===", svc_address);
+  let mut stream = TcpStream::connect(svc_address);
+  match stream {
+    Ok(_) => {
+      log::info!("service status: true");
+      return true;
+    }
+
+    Err(_) => {
+      log::info!("service status: false");
+      return false;
+    }
+  }
+}
+
 
 #[test]
 fn test_register_svc() {
@@ -68,6 +87,11 @@ fn test_register_svc() {
   }
 }
 
+#[test]
+fn check_service_test() {
+  let check = check_service("127.0.0.1:8500");
+  println!("check --- {}", check);
+}
 
 
 

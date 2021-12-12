@@ -143,7 +143,7 @@ impl CakeServiceServe {
                                             self.reg_ttl.to_string(),
                                             self.debug);
     let res = reg.do_reg_http(self.http_addr.to_string(),
-      typ);
+                              typ);
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
@@ -154,7 +154,7 @@ impl CakeServiceServe {
     Ok(true)
   }
 
-  pub fn register_svc_external(&self, typ: &str) -> Result<bool, CakeError> {
+  pub fn register_svc_external(&self, typ: &str, interval: u64) -> Result<bool, CakeError> {
     let svc_address = self.addr.clone();
     let svc_split = self.addr.split(":");
     let svc_split_vec: Vec<&str> = svc_split.collect();
@@ -169,7 +169,8 @@ impl CakeServiceServe {
                                             svc_split_vec[1].to_string(),
                                             self.reg_ttl.to_string(),
                                             self.debug);
-    let res = reg.do_reg_external(svc_address, typ);
+    let res = reg.do_reg_external(svc_address,
+                                  typ, interval);
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
@@ -223,6 +224,11 @@ impl CakeServiceServe {
   // }
 
   pub async fn run(self) -> io::Result<()> {
+    ctrlc::set_handler(move || {
+      println!("=== Ctrl-c cancel, server exit ===");
+      std::process::exit(1);
+    }).expect("Error setting Ctrl-C handler");
+
     let selfx = self.clone();
     let selfy = self.clone();
     // todo: register svc
