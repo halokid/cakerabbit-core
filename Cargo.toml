@@ -1,6 +1,6 @@
 [package]
 name = "cakerabbit-core"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["halokid <r00txxyyzz@gmail.com>"]
 edition = "2018"
 description = "A rust microservice framework, this is the core kernel for the project."
@@ -50,7 +50,6 @@ path = "examples/echo_use_localsource/server_use_cake_rspbigdata.rs"
 [[example]]
 name = "echoserver_httpapi"
 path = "examples/echo_use_localsource/server_use_cake_httpapi.rs"
-
 
 
 

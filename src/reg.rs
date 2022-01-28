@@ -55,16 +55,16 @@ impl Register {
 
 // check the status for external service, use tcp connect port
 pub fn check_service(svc_address: &str) -> bool {
-  log::info!("=== check_service {} ===", svc_address);
+  // log::info!("=== check_service {} ===", svc_address);
   let mut stream = TcpStream::connect(svc_address);
   match stream {
     Ok(_) => {
-      log::info!("service status: true");
+      log::info!("=== check_service {} === service status: true", svc_address);
       return true;
     }
 
     Err(_) => {
-      log::info!("service status: false");
+      log::info!("=== check_service {} === service status: false", svc_address);
       return false;
     }
   }
