@@ -219,7 +219,7 @@ impl RegisterImpl for RegConsul {
       trace!("--- loop write svc info ---");
       loop {
         thread::sleep(time::Duration::from_secs(interval));
-        if !check_service(svc_address.as_str()) {
+        if !check_service(&self.svc_name, svc_address.as_str()) {
           break;
         }
         let ok = c.session_renew(&kv_session).unwrap();
