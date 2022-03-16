@@ -15,6 +15,7 @@ mod selector;
 mod node;
 mod cakeclient;
 mod failmode;
+mod config;
 
 pub use crate::endpoint::{
   serve, Ack, Client, Endpoint, Response,
@@ -42,6 +43,10 @@ pub use crate::errors::{
 
 pub use crate::cakeclient::{
   CakeClient,
+};
+
+pub use crate::config::{
+  CONFIG,
 };
 
 pub use rmpv::{Integer, Utf8String, Value};

@@ -174,7 +174,7 @@ impl CakeServiceServe {
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
-        info!("Service {} register error: {:?}.", svc_namex, e);
+        error!("Service {} register error: {:?}.", svc_namex, e);
         // std::process::exit(0);   // dont need to exit service
       }
     }
@@ -266,7 +266,7 @@ impl CakeServiceServe {
         }
       };
 
-      info!("new client connection -------- {:?}, index: {}", socket, index);
+      info!("new client connection -->>> {:?}, index: {}", socket, index);
       info!("spawning a new Service Serve");
       // todo: add move to optimize self.clone()??
       // tokio::spawn(serve(socket.compat(), self.clone())
@@ -309,9 +309,9 @@ impl Service for CakeServiceServe {
         let f = **box_fn;
         let rsp_res = f(params);
         let rsp = rsp_res.unwrap();
-        trace!("server rsp Vec[u8] ---------- {:?}", rsp);
+        trace!("server rsp Vec[u8] -->>> {:?}", rsp);
         let rsp_decode = str::from_utf8(&rsp).unwrap();
-        trace!("server rsp  ---------- {:?}", rsp_decode);
+        trace!("server rsp -->>> {:?}", rsp_decode);
 
         return Box::pin(
           future::ok(rsp_decode.into())

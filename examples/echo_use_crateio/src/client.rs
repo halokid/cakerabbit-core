@@ -23,11 +23,11 @@ async fn main() -> io::Result<()> {
   let res = cake_client.call("say_hello", &["foo".into()]).await;
   match res {
     Ok(rsp) => {
-      println!("rsp ------------ {}", rsp);
+      println!("rsp -->>> {}", rsp);
     }
 
     Err(err) => {
-      println!("err ------------------ {:?}", err);
+      println!("err -->>> {:?}", err);
     }
   }
 
@@ -35,10 +35,10 @@ async fn main() -> io::Result<()> {
   // todo: cake_clientx borrow to anthor thread, because use tokio async fn here!
   match cake_client.call("say_hello", &["foo2".into()]).await {
     Ok(rsp) => {
-      println!("rsp2 ------------ {}", rsp);
+      println!("rsp2 -->>> {}", rsp);
     },
     Err(err) => {
-      println!("err2 ------------------ {:?}", err);
+      println!("err2 -->>> {:?}", err);
     }
   }
 

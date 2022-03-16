@@ -18,7 +18,7 @@ struct SayHelloReply {
 }
 
 fn say_hello(params: &[Value]) -> CakeResult<Vec<u8>> {
-  println!("say_hello params ------------ {:?}", params);
+  println!("say_hello params -->>> {:?}", params);
   if let Value::String(ref value) = params[0] {
     if let Some(val) = value.as_str() {
       let rsp = SayHelloReply {

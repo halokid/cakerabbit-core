@@ -23,11 +23,11 @@ async fn main() -> io::Result<()> {
   let res = cake_client.call("say_hello", &["foo".into()]).await;
   match res {
     Ok(rsp) => {
-      println!("rsp ------------ {}", rsp);
+      println!("rsp -->>> {}", rsp);
     }
 
     Err(err) => {
-      println!("err ------------------ {:?}", err);
+      println!("err -->>> {:?}", err);
     }
   }
 

@@ -50,7 +50,7 @@ impl RegisterImpl for RegConsul {
                                    "".to_string(),
                                    "delete".to_string(),
                                    (&self.svc_ttl).to_string());
-    trace!("kv_session --------- {}", kv_session);
+    trace!("kv_session -->>> {}", kv_session);
     thread::sleep(time::Duration::from_secs(1)); // todo: 确保session生成
 
     let del_kv_ers = c.kv_delete_both_session(&key);
@@ -75,7 +75,7 @@ impl RegisterImpl for RegConsul {
         let ok = c.session_renew(&kv_session).unwrap();
         debug!("renew session {} {:?}", kv_session, ok);
         let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
-        debug!("--- loop register svc --- {}", ok);
+        debug!("--- loop register svc -->>> {}", ok);
       }
     }
   }
@@ -115,7 +115,7 @@ impl RegisterImpl for RegConsul {
                                    "".to_string(),
                                    "delete".to_string(),
                                    (&self.svc_ttl).to_string());
-    trace!("kv_session --------- {}", kv_session);
+    trace!("kv_session -->>> {}", kv_session);
     thread::sleep(time::Duration::from_secs(1)); // todo: 确保session生成
 
     let del_kv_ers = c.kv_delete_both_session(&key);
@@ -140,7 +140,7 @@ impl RegisterImpl for RegConsul {
         let ok = c.session_renew(&kv_session).unwrap();
         debug!("renew session {} {:?}", kv_session, ok);
         let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
-        debug!("--- loop register svc --- {}", ok);
+        debug!("--- loop register svc -->>> {}", ok);
       }
     }
   }
@@ -178,10 +178,18 @@ impl RegisterImpl for RegConsul {
     let key = format!("{}{}/http@{}", path_prex,
                       &self.svc_name,
                       svc_address);
-    log::info!("do_reg_external key ---- {}", key);
+    log::info!("do_reg_external key -->>> {}", key);
 
     // todo: if exists the node service key, it means some thread is processing the register
-    // todo: just return the fn
+    // todo: just return the fn, but this is a bug!!! if the service stop at some time, but the
+    // todo: service info is still in memory, so when the status-checker check the service status
+    // todo: is false, then the process will stop loop register the service, but at this time
+    // todo: the service start again!!! then service send a register request to process, the
+    // todo: process think the service already exist, it will not register again! then the
+    // todo: start-again service register fail!!!! solution is when the service check status
+    // todo: false, then remove the service info from the memory!
+    // todo: for the comunicate stable for the service, if the status-checker is false, we should
+    // todo: remove the service info in Consul at once??
     let service_node_val = c.kv_get(&key);
     if !service_node_val.eq("keyNoExists_or_valIsNull") {
       log::warn!("the service node key: {}, val: {} exists, exit Thread {:?}", &key,
@@ -197,7 +205,7 @@ impl RegisterImpl for RegConsul {
                                    "".to_string(),
                                    "delete".to_string(),
                                    (&self.svc_ttl).to_string());
-    info!("kv_session --------- {}", kv_session);
+    info!("kv_session -->>> {}", kv_session);
     thread::sleep(time::Duration::from_secs(1)); // todo: 确保session生成
 
     let del_kv_ers = c.kv_delete_both_session(&key);
@@ -220,6 +228,7 @@ impl RegisterImpl for RegConsul {
       loop {
         thread::sleep(time::Duration::from_secs(interval));
         if !check_service(&self.svc_name, svc_address.as_str()) {
+          // todo: service checker is false!!!
           break;
         }
         let ok = c.session_renew(&kv_session).unwrap();
@@ -230,6 +239,7 @@ impl RegisterImpl for RegConsul {
 
       // Ok(true)
       Err(CakeError(format!("[do_reg_external] --- service: {}, node: {} status is false", &self.svc_name ,svc_address)))
+      // todo: remove the service info from memory
     }
   }
 
@@ -266,7 +276,7 @@ impl RegisterImpl for RegConsul {
 fn test_get_service_nodes() {
   let reg_consul = RegConsul::new("8.8.8.8:8500".to_string(), "Echo".to_string(), "cake".to_string(), "88".to_string(), "10m0s".to_string(), true);
   let svc_nodes = reg_consul.get_service_nodes("Echo".to_string());
-  trace!("svc_nodes ------ {:?}", svc_nodes);
+  trace!("svc_nodes -->>> {:?}", svc_nodes);
 }
 
 

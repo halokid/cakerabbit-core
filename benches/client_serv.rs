@@ -37,11 +37,11 @@ async fn client_to_serv() -> io::Result<()> {
                              &["foo".into()]).await;
   match res {
     Ok(rsp) => {
-      println!("rsp ------------ {}", rsp)
+      println!("rsp -->>> {}", rsp)
     }
 
     Err(err) => {
-      println!("err ------------------ {:?}", err)
+      println!("err -->>> {:?}", err)
     }
   }
 

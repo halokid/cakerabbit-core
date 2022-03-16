@@ -2,6 +2,10 @@ use std::net::TcpStream;
 use crate::CakeError;
 use crate::reg_consul::{RegConsul};
 use env_logger::Env;
+use serde::__private::de::Content::U32;
+use crate::{CONFIG};
+use std::thread;
+use std::time;
 
 pub trait RegisterImpl {
 
@@ -64,9 +68,36 @@ pub fn check_service(svc_name: &str, svc_address: &str) -> bool {
     }
 
     Err(_) => {
-      log::info!("=== check_service {}, {} === service status: false", svc_name, svc_address);
+      log::error!("=== check_service {}, {} === service status: false,\
+       checker will retries {} times", svc_name, svc_address, CONFIG["service_check_retries"]);
+
+      let service_check_retries = CONFIG["service_check_retries"].parse::<u64>().unwrap();
+      for i in 0..service_check_retries {
+        log::error!("=== check_service {}, {} === service status: false, checker retries \
+        times {}", svc_name, svc_address, i);
+        let check_res = inner_check_service(svc_address);
+        if check_res {      // if service status OK again
+          return true;
+        }
+        thread::sleep(time::Duration::from_secs(20));
+      }
+
+      log::error!("=== check_service {}, {} === service status: false", svc_name, svc_address);
       return false;
     }
+  }
+}
+
+// todo: retry check service will occur a problem, if thread-A is retrying check service, when
+// todo: the checker until 80 seconds, this time the service restart again, and online status
+// todo: within 10 seconds, the API create a thread-B to handle this. and the thread-A next 20
+// todo: seconds check will be OK, in this case, that has two threads to handler one service,
+// todo: it should not be. so this solution is not good enough!!
+fn inner_check_service(svc_address: &str) -> bool {
+  let mut stream = TcpStream::connect(svc_address);
+  match stream {
+    Ok(_) => true,
+    Err(_) => false
   }
 }
 
@@ -89,8 +120,10 @@ fn test_register_svc() {
 
 #[test]
 fn check_service_test() {
-  let check = check_service("127.0.0.1:8500");
-  println!("check --- {}", check);
+  env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+  // let check = check_service("svc_name", "127.0.0.1:8500");
+  let check = check_service("service_access_demo", "127.0.0.1:8989");
+  println!("check -->>> {}", check);
 }
 
 

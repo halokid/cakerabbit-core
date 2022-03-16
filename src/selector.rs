@@ -82,7 +82,7 @@ impl Selector for RoundRobinSelect {
 
     let mut index = self.round_index;
     index = index % serv_nodes_len;
-    trace!("index --------- {}", index);
+    trace!("index -->>> {}", index);
     let node = self.serv_nodes.get(index).unwrap();
     self.round_index = index + 1;
     node.to_string()
@@ -108,19 +108,19 @@ mod tests {
     let mut rng = rand::thread_rng();
     let range = Uniform::new(0, 5);
     let x = rng.sample(&range);
-    trace!("random i32 ------------- {}", x);
+    trace!("random i32 -->>> {}", x);
 
     let mut selector = new_selector(&SelectorTyp::Random,
                                     vec!["8.8.8.8:90".to_string(),
                                          "7.7.7.7:99".to_string(), "6.6.6.6:88".to_string()]);
     let node = selector.select();
-    trace!("node --------- {}", node);
+    trace!("node -->>> {}", node);
 
     let new_nodes = vec!["1.1.1.1:33".to_string(), "2.2.2.2:55".to_string()];
     let ok = selector.update_serv_nodes(new_nodes);
-    trace!("ok ---------- {:?}", ok);
+    trace!("ok -->>> {:?}", ok);
     let node1 = selector.select();
-    trace!("node1 --------- {}", node1);
+    trace!("node1 -->>> {}", node1);
   }
 
   #[test]
@@ -129,19 +129,19 @@ mod tests {
                                     vec!["8.8.8.8:90".to_string(),
                                          "7.7.7.7:99".to_string(), "6.6.6.6:88".to_string()]);
     let node1 = selector.select();
-    trace!("node1 --------- {}", node1);
+    trace!("node1 -->>> {}", node1);
 
     thread::sleep(time::Duration::from_secs(1));
     let node2 = selector.select();
-    trace!("node2 ---------- {}", node2);
+    trace!("node2 -->>> {}", node2);
 
     thread::sleep(time::Duration::from_secs(1));
     let node3 = selector.select();
-    trace!("node3 ---------- {}", node3);
+    trace!("node3 -->>> {}", node3);
 
     thread::sleep(time::Duration::from_secs(1));
     let node4 = selector.select();
-    trace!("node4 ---------- {}", node4);
+    trace!("node4 -->>> {}", node4);
   }
 }
 

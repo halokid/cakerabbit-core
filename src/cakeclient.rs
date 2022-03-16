@@ -51,7 +51,7 @@ impl CakeClient {
             },
 
             Err(err) => {
-              error!("cakeClient call Error --------------- {:?}", err)
+              error!("cakeClient call Error -->>> {:?}", err)
             }
           }
           retries -= 1;
@@ -74,7 +74,7 @@ impl CakeClient {
                                            svc_namex.to_string(),
                                            (&self.svc_prefix).to_string(), false);
     let svc_nodes = reg.get_service_nodes(self.svc_name.clone());
-    trace!("svc_nodes ------------- {:?}", svc_nodes);
+    trace!("svc_nodes -->>> {:?}", svc_nodes);
     let mut selector = new_selector(&self.selector_typ,
                                     svc_nodes);
     let node_addr = selector.select();
@@ -89,7 +89,7 @@ impl CakeClient {
      }
 
       Err(err) => {
-        Err(CakeError(format!("client.call Error: {:?}", err)))
+        Err(CakeError(format!("client.call Error -->>> {:?}", err)))
       }
     }
 

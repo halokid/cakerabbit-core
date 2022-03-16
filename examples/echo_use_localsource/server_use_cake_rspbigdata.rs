@@ -18,7 +18,7 @@ struct SayHelloReply {
 }
 
 fn say_hello(params: &[Value]) -> CakeResult<Vec<u8>> {
-  println!("say_hello params ------------ {:?}", params);
+  println!("say_hello params -->>> {:?}", params);
   let bigdata = get_big_data();
   Ok(Vec::from(bigdata))
 }
