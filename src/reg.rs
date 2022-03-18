@@ -1,8 +1,8 @@
-use std::net::TcpStream;
+use std::net::{Shutdown, TcpStream};
 use crate::CakeError;
 use crate::reg_consul::{RegConsul};
 use env_logger::Env;
-use serde::__private::de::Content::U32;
+use serde::__private::de::Content::{U32, U64};
 use crate::{CONFIG};
 use std::thread;
 use std::time;
@@ -62,27 +62,30 @@ pub fn check_service(svc_name: &str, svc_address: &str) -> bool {
   // log::info!("=== check_service {} ===", svc_address);
   let mut stream = TcpStream::connect(svc_address);
   match stream {
-    Ok(_) => {
+    Ok(s) => {
       log::info!("=== check_service {}, {} === service status: true", svc_name, svc_address);
+      s.shutdown(Shutdown::Both).unwrap();
       return true;
     }
 
     Err(_) => {
       log::error!("=== check_service {}, {} === service status: false,\
-       checker will retries {} times", svc_name, svc_address, CONFIG["service_check_retries"]);
+       checker will retries {} times in ThreadID {:?}", svc_name, svc_address, CONFIG["service_check_retries"], thread::current().id());
 
       let service_check_retries = CONFIG["service_check_retries"].parse::<u64>().unwrap();
       for i in 0..service_check_retries {
         log::error!("=== check_service {}, {} === service status: false, checker retries \
-        times {}", svc_name, svc_address, i);
+        times {} in ThreadID {:?}", svc_name, svc_address, i, thread::current().id());
         let check_res = inner_check_service(svc_address);
         if check_res {      // if service status OK again
           return true;
         }
-        thread::sleep(time::Duration::from_secs(20));
+        let check_itval = CONFIG["service_check_interval"].parse::<u64>().unwrap();
+        thread::sleep(time::Duration::from_secs(check_itval));
       }
 
-      log::error!("=== check_service {}, {} === service status: false", svc_name, svc_address);
+      log::error!("=== check_service {}, {} === service status: false in ThreadID {:?}",
+        svc_name, svc_address, thread::current().id());
       return false;
     }
   }
@@ -93,10 +96,23 @@ pub fn check_service(svc_name: &str, svc_address: &str) -> bool {
 // todo: within 10 seconds, the API create a thread-B to handle this. and the thread-A next 20
 // todo: seconds check will be OK, in this case, that has two threads to handler one service,
 // todo: it should not be. so this solution is not good enough!!
+// todo: but this solution can run OK, because when new request for register service, it has
+// todo: two condition
+// todo: 1 is the service info is not in register center, in this case, the new
+// todo: request will recreate the session, so it will not two threads handle one service, the old
+// todo: thread will occur [ERROR] `CustomError("renew session err` and exist. the new thread will
+// todo: take over it.
+// todo: 2 is the service info is still in register center, in this case, the old thread checker
+// todo: will check the service status, it is true, old thread will lopp handle again, the new
+// todo: thread waill exist when it found the service info is `exist`
 fn inner_check_service(svc_address: &str) -> bool {
   let mut stream = TcpStream::connect(svc_address);
   match stream {
-    Ok(_) => true,
+    Ok(s) => {
+      s.shutdown(Shutdown::Both).unwrap();
+      true
+    }
+
     Err(_) => false
   }
 }

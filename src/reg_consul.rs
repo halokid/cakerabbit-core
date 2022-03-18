@@ -2,6 +2,7 @@ use crate::reg::{check_service, RegisterImpl};
 use crate::CakeError;
 use consul_rs_plus::Client;
 use std::{thread, time};
+use consul_rs_plus::pkg::CustomError;
 
 
 pub struct RegConsul {
@@ -191,12 +192,16 @@ impl RegisterImpl for RegConsul {
     // todo: for the comunicate stable for the service, if the status-checker is false, we should
     // todo: remove the service info in Consul at once??
     let service_node_val = c.kv_get(&key);
+
+    // todo: if the service info the register-center, dont do anything???
+    /*
     if !service_node_val.eq("keyNoExists_or_valIsNull") {
       log::warn!("the service node key: {}, val: {} exists, exit Thread {:?}", &key,
         service_node_val, thread::current().id());
       // todo: exit the Tread
       return Ok(true);
     }
+     */
 
     // let val = String::from("typ=rust");
     let val = format!("typ={}", typ);
@@ -231,8 +236,18 @@ impl RegisterImpl for RegConsul {
           // todo: service checker is false!!!
           break;
         }
-        let ok = c.session_renew(&kv_session).unwrap();
-        debug!("renew session {} {:?}", kv_session, ok);
+        // let ok = c.session_renew(&kv_session).unwrap();
+        // debug!("renew session {} {:?}", kv_session, ok);
+
+        let sess_renew_res = c.session_renew(&kv_session);
+        match sess_renew_res {
+          Err(e) => {
+            debug!("[ERROR] -->>> renew session {} {:?} in {:?}", kv_session, ok,
+              thread::current().id());
+          }
+          _ => {}
+        }
+
         let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
         info!("--- loop register svc --- {}, {}, in {:?}", &key, ok, thread::current().id());
       }
