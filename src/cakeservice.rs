@@ -174,8 +174,11 @@ impl CakeServiceServe {
     match res {
       Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
       Err(e) => {
-        error!("Service {} register error: {:?}.", svc_namex, e);
+        let err = format!("Service {} register error: {:?}.", svc_namex, e);
+        error!("{}", err);
         // std::process::exit(0);   // dont need to exit service
+        // Ok(CakeError(err))
+        return Err(CakeError(err));
       }
     }
     Ok(true)
