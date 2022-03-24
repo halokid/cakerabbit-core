@@ -2,6 +2,7 @@ use std::{io, result};
 use std::net::SocketAddr;
 use std::pin::Pin;
 use std::str;
+use std::sync::Mutex;
 
 use futures::{Future, future, FutureExt, ready, Sink, Stream, TryFutureExt};
 use rmpv::Value;
@@ -154,7 +155,8 @@ impl CakeServiceServe {
     Ok(true)
   }
 
-  pub fn register_svc_external(&self, typ: &str, interval: u64) -> Result<bool, CakeError> {
+  pub fn register_svc_external(&self, typ: &str, interval: u64,
+                               repeat_service: Mutex<Vec<String>>) -> Result<bool, CakeError> {
     let svc_address = self.addr.clone();
     let svc_split = self.addr.split(":");
     let svc_split_vec: Vec<&str> = svc_split.collect();
