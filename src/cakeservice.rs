@@ -249,9 +249,9 @@ impl CakeServiceServe {
         selfy.register_svc_http("cakeRabbit");
       });
     }
-    // return Ok(());   // todo: if only http, just return
+    return Ok(());   // todo: if only http, just return
 
-    // /*
+    /*
     // todo: register svc, if only support http service, dont need this
     tokio::task::spawn(async move {
       selfx.register_svc();
@@ -283,7 +283,7 @@ impl CakeServiceServe {
       // tokio::task::spawn( async move { serve(socket.compat(), self.clone())
       //   .map_err(|e| info!("service start error {}", e))} );
     }
-     // */
+     */
   }
 }
 
