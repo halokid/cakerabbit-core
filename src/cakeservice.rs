@@ -228,6 +228,7 @@ impl CakeServiceServe {
   // }
 
   pub async fn run(self) -> io::Result<()> {
+    log::info!("=== cakeService run ===");
     ctrlc::set_handler(move || {
       println!("=== Ctrl-c cancel, server exit ===");
       std::process::exit(1);
