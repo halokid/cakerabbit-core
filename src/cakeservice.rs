@@ -235,10 +235,6 @@ impl CakeServiceServe {
 
     let selfx = self.clone();
     let selfy = self.clone();
-    // todo: register svc
-    tokio::task::spawn(async move {
-      selfx.register_svc();
-    });
 
     // todo: http api
     // tokio::task::spawn(async move {
@@ -253,7 +249,13 @@ impl CakeServiceServe {
         selfy.register_svc_http("cakeRabbit");
       });
     }
+    // return Ok(());   // todo: if only http, just return
 
+    // /*
+    // todo: register svc, if only support http service, dont need this
+    tokio::task::spawn(async move {
+      selfx.register_svc();
+    });
     let addr: SocketAddr = self.addr.parse().unwrap();
     let listener = TcpListener::bind(&addr).await?;
     let mut index = 0;
@@ -281,6 +283,7 @@ impl CakeServiceServe {
       // tokio::task::spawn( async move { serve(socket.compat(), self.clone())
       //   .map_err(|e| info!("service start error {}", e))} );
     }
+     // */
   }
 }
 
