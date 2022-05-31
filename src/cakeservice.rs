@@ -130,6 +130,7 @@ impl CakeServiceServe {
   }
 
   pub fn register_svc_http(&self, typ: &str) -> Result<bool, CakeError> {
+    log::info!("=== call register_svc_http ===");
     let svc_split = self.addr.split(":");
     let svc_split_vec: Vec<&str> = svc_split.collect();
     let svc_namex = self.svc_name.clone();
