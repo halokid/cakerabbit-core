@@ -140,7 +140,10 @@ impl RegisterImpl for RegConsul {
         thread::sleep(time::Duration::from_secs(100));
         let ok = c.session_renew(&kv_session).unwrap();
         debug!("renew session {} {:?}", kv_session, ok);
-        let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
+        let val_read = c.kv_get(&key);
+        debug!("read the exist key val -->>> {:?}", val_read.as_str());
+        // let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
+        let ok = c.kv_set_with_session(&key.to_string(), &val_read, &kv_session.to_string()).unwrap();
         debug!("--- loop register svc -->>> {}", ok);
       }
     }
