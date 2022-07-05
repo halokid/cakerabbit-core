@@ -68,7 +68,7 @@ impl RegisterImpl for RegConsul {
     let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
     trace!("write svc addr: {}", ok);
     if !ok {
-      return Err(CakeError("svc register addr fail".to_string()));
+      return Err(CakeError("svc register addr fail do_reg()".to_string()));
     } else {
       trace!("--- loop write svc info ---");
       loop {
@@ -133,7 +133,7 @@ impl RegisterImpl for RegConsul {
     let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
     trace!("write svc addr: {}", ok);
     if !ok {
-      return Err(CakeError("svc register addr fail".to_string()));
+      return Err(CakeError("svc register addr fail do_reg_http()".to_string()));
     } else {
       trace!("--- loop write svc info ---");
       loop {
@@ -230,7 +230,7 @@ impl RegisterImpl for RegConsul {
     let ok = c.kv_set_with_session(&key.to_string(), &val.to_string(), &kv_session.to_string()).unwrap();
     info!("write svc addr: {}", ok);
     if !ok {
-      return Err(CakeError("svc register addr fail".to_string()));
+      return Err(CakeError("svc register addr fail do_reg_external()".to_string()));
     } else {
       trace!("--- loop write svc info ---");
       loop {
