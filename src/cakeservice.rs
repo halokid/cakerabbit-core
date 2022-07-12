@@ -186,6 +186,36 @@ impl CakeServiceServe {
     Ok(true)
   }
 
+  pub fn register_svc_external_noseesion(&self, typ: &str, interval: u64) -> Result<bool, CakeError> {
+    let svc_address = self.addr.clone();
+    let svc_split = self.addr.split(":");
+    let svc_split_vec: Vec<&str> = svc_split.collect();
+    let svc_namex = self.svc_name.clone();
+    let reg_adapter = &self.reg_adapter;
+    let reg_addr = &self.reg_addr;
+    let svc_name = &self.svc_name;
+    let mut reg = Register::new_for_service(reg_adapter.to_string(),
+                                            reg_addr.to_string(),
+                                            svc_name.to_string(),
+                                            self.svc_prefix.to_string(),
+                                            svc_split_vec[1].to_string(),
+                                            self.reg_ttl.to_string(),
+                                            self.debug);
+    let res = reg.do_reg_external_nosession(svc_address,
+                                  typ, interval);
+    match res {
+      Ok(reg_res) => { info!("Service {} register result {}", svc_namex, reg_res) }
+      Err(e) => {
+        let err = format!("Service {} register error: {:?}.", svc_namex, e);
+        error!("{}", err);
+        // std::process::exit(0);   // dont need to exit service
+        // Ok(CakeError(err))
+        return Err(CakeError(err));
+      }
+    }
+    Ok(true)
+  }
+
   pub fn register_fn(&self, fn_key: String, f: CakeFn) {
     let mut fn_map = self.svc_fns.write().unwrap();
     fn_map.insert(fn_key, Box::new(f));
