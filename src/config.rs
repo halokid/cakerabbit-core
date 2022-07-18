@@ -10,8 +10,8 @@ lazy_static! {
     // todo: duration service stop and remove info from register center, when the service
     // todo: start again, the service info is not in the register center, this make sure the
     // todo: checker process will not consider the service is exist already and exit register.
-    config.insert("service_check_retries", "5");
-    config.insert("service_check_interval", "40");
+    config.insert("service_check_retries", "10");
+    config.insert("service_check_interval", "30");
 
     config
   };
