@@ -328,6 +328,53 @@ impl RegisterImpl for RegConsul {
     }
   }
 
+  fn do_reg_external_nosession_nocheck(&mut self, svc_address: String, typ: &str,
+                     interval: u64) -> Result<bool, CakeError> {
+    log::info!("svc_addr --- {}", svc_address);
+    let mut path_prex = &self.svc_prefix;
+    let mut regaddr_iter = &self.regaddr.split(":");
+    let regaddr_vec: Vec<&str> = regaddr_iter.clone().collect();
+    let consul_host = regaddr_vec[0];
+    let consul_port = regaddr_vec[1];
+    let consul_port_u16 = consul_port.parse::<u16>().unwrap();
+
+    let mut c = Client::new(consul_host, consul_port_u16);
+    c.debug = self.debug;
+    // set key
+    let key_svc = format!("{}{}", path_prex, &self.svc_name);
+
+    // 先检查svc的key是否存在
+    let svc_reg = c.kv_get(format!("{}", &key_svc));
+    if svc_reg.eq("keyNoExists_or_valIsNull") {
+      let reg_ok = c.kv_set(format!("{}", &key_svc),
+                            format!("{}", &self.svc_name.to_string()));
+      match reg_ok {
+        Err(e) => {
+          error!("Service {} register error: {}", &self.svc_name, e);
+        }
+        _ => {}
+      }
+    }
+
+    let key = format!("{}{}/http@{}", path_prex,
+                      &self.svc_name,
+                      svc_address);
+    log::info!("do_reg_external key -->>> {}", key);
+    let service_node_val = c.kv_get(&key);
+
+    // let val = String::from("typ=rust");
+    let val = format!("typ={}", typ);
+
+    let ok = c.kv_set(&key.to_string(), &val.to_string()).unwrap();
+    info!("register no session service -->>> {}, res -->>> {}", &key, ok);
+    if !ok {
+      return Err(CakeError("svc register addr fail do_reg_external_nosession()".to_string()));
+    } else {
+      trace!("--- write svc info success ---");
+      Ok(true)
+    }
+  }
+
   fn watch_services(&mut self) -> Result<bool, CakeError> {
     todo!()
   }

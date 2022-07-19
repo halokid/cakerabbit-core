@@ -19,6 +19,9 @@ pub trait RegisterImpl {
   fn do_reg_external_nosession(&mut self, svc_address: String, typ: &str,
                      interval: u64) -> Result<bool, CakeError>;
 
+  fn do_reg_external_nosession_nocheck(&mut self, svc_address: String, typ: &str,
+                     interval: u64) -> Result<bool, CakeError>;
+
   fn watch_services(&mut self) -> Result<bool, CakeError>;
 
   fn get_service_nodes(&self, service: String) -> Vec<String>;
