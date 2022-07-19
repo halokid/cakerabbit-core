@@ -366,7 +366,7 @@ impl RegisterImpl for RegConsul {
     let val = format!("typ={}", typ);
 
     let ok = c.kv_set(&key.to_string(), &val.to_string()).unwrap();
-    info!("register no session service -->>> {}, res -->>> {}", &key, ok);
+    info!("register no session nocheck service -->>> {}, res -->>> {}", &key, ok);
     if !ok {
       return Err(CakeError("svc register addr fail do_reg_external_nosession()".to_string()));
     } else {
